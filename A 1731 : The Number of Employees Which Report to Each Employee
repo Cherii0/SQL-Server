@@ -11,3 +11,22 @@ HAVING reports_to IS NOT NULL
 INNER JOIN
 (SELECT employee_id, name FROM Employees) AS Names
 ON Managers.managers_ids = Names.employee_id
+
+--------------------------------------SECOND APPROACH-----------------------------------------------------------
+
+SELECT 
+	Manag.employee_id,
+	Manag.name,
+	COUNT(*) AS reports_count,
+	ROUND(AVG(Empl.age * 1.00), 0) AS average_age
+FROM 
+	Employees AS Empl
+LEFT JOIN 
+	Employees AS Manag
+ON
+	Empl.reports_to = Manag.employee_id
+WHERE 
+	Manag.employee_id IS NOT NULL
+GROUP BY 
+	Manag.employee_id, Manag.name
+ORDER BY Manag.employee_id;
