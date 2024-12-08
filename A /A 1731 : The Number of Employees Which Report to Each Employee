@@ -1,0 +1,13 @@
+SELECT * FROM (
+SELECT
+	reports_to AS managers_ids,
+	COUNT(*) AS reports_count,
+	ROUND(AVG(age), 0) AS average_age
+FROM
+	Employees
+GROUP BY reports_to
+HAVING reports_to IS NOT NULL
+) AS Managers 
+INNER JOIN
+(SELECT employee_id, name FROM Employees) AS Names
+ON Managers.managers_ids = Names.employee_id
