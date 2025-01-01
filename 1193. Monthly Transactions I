@@ -1,26 +1,21 @@
-=======================================3/4 correct solution==========================================
+=======================================SOLUTION==========================================
+
 SELECT 
-	 LEFT(rem_inf.trans_date, 7) AS month,
-	qu_gro.country,
-	qu_gro.trans_count,
-	qu_gro.approved_count,
-	qu_gro.trans_total_amount,
-	trans_total_amount AS approved_total_amount
-FROM (
-SELECT 
+	CASE WHEN MONTH(trans_date) < 10
+	THEN CONCAT(YEAR(trans_date),'-0', MONTH(trans_date))
+	ELSE CONCAT(YEAR(trans_date),'-', MONTH(trans_date))
+	END
+	AS 'month',
 	country,
-	MONTH(trans_date) AS month,
 	COUNT(*) AS trans_count,
-	SUM(CASE WHEN state = 'approved' THEN 1 ELSE 0 END) AS approved_count,
-	SUM(CASE WHEN state = 'approved' THEN amount ELSE 0 END) AS trans_total_amount
+	SUM(CASE WHEN state = 'approved' THEN 1 ELSE 0 END) AS approved_count ,
+	SUM(amount) AS trans_total_amount ,
+	SUM(CASE WHEN state = 'approved' THEN amount ELSE 0 END) AS approved_total_amount 
 FROM 
 	Transactions
-GROUP BY country, MONTH(trans_date)
-) qu_gro
-LEFT JOIN Transactions AS rem_inf
-ON 
-	qu_gro.country = rem_inf.country 
-	AND qu_gro.month = MONTH(rem_inf.trans_date);
+GROUP BY
+	country, YEAR(trans_date), MONTH(trans_date)
+
 ==========================================QUESTION==================================================
 
 Table: Transactions
