@@ -1,4 +1,4 @@
-======================================SOLUTION======================================
+======================================SOLUTION 1======================================
 
 SELECT
 	Seat1.id,
@@ -19,6 +19,22 @@ LEFT JOIN
 ) AS Seat2
 ON Seat1.id <> Seat2.id AND Seat1.con2 = Seat2.con2
 ORDER BY id ASC
+
+
+======================================SOLUTION 2======================================
+
+SELECT
+	id,
+	CASE WHEN (swap_condition = 1) 
+		THEN LEAD(student, 1, student) OVER(ORDER BY id)
+		ELSE LAG(student, 1) OVER(ORDER BY id) END AS student
+FROM (
+SELECT 
+	*,
+	(id % 2) AS swap_condition
+FROM 
+	Seat
+) AS temp
 
 ======================================QUESTION======================================
 
