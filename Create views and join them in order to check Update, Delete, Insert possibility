@@ -18,8 +18,26 @@ LEFT JOIN
         AS new_price ON dbo.london_houses.[Square Meters] = new_price.[Square Meters]
 )
 
+CREATE VIEW vwUniqueSquareMeters AS
+(SELECT DISTINCT [Square Meters] AS unique_square_meters FROM vwLondonPricesComparasion)
+
+CREATE VIEW vwAvgsBedBad AS
+(SELECT  [Square Meters], AVG(Bedrooms) AS AVG_BED, AVG(Bathrooms) AS AVG_BATH FROM vwLondonPricesComparasion GROUP BY [Square Meters])
+
+
+SELECT
+		*
+FROM
+		vwUniqueSquareMeters
+LEFT JOIN
+		(SELECT * FROM vwAvgsBedBad) AS avgs
+		ON vwUniqueSquareMeters.unique_square_meters = avgs.[Square Meters]
+
+
 =================================TASK=====================================
 
-remove all duplicates for address column in london_houses table in order to make join avaliable
+- remove all duplicates for address column in london_houses table in order to make join avaliable
 compute new price based on average price on each unique square meters value, export this result as view
+- Create views and join them in order to check Update, Delete, Insert possibility
+        
 
