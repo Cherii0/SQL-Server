@@ -1,0 +1,25 @@
+=================================SOLUTION=================================
+
+DELETE dbo.london_houses
+WHERE Address IN (SELECT Address FROM dbo.london_houses GROUP BY Address HAVING COUNT(*)  > 1)
+
+CREATE OR ALTER VIEW vwLondonPricesComparasion AS (
+SELECT 
+        Address, 
+        Bedrooms, 
+        Bathrooms, 
+        dbo.london_houses.[Square Meters], 
+        dbo.london_houses.Price, 
+        new_price.avg_price
+FROM 
+        dbo.london_houses
+LEFT JOIN 
+        (SELECT [Square Meters], AVG(Price) AS avg_price FROM dbo.london_houses GROUP BY [Square Meters])    
+        AS new_price ON dbo.london_houses.[Square Meters] = new_price.[Square Meters]
+)
+
+=================================TASK=====================================
+
+remove all duplicates for address column in london_houses table in order to make join avaliable
+compute new price based on average price on each unique square meters value, export this result as view
+

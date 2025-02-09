@@ -1,8 +1,0 @@
-=================================SOLUTION=================================
-
-DELETE dbo.london_houses
-WHERE Address IN (SELECT Address FROM dbo.london_houses GROUP BY Address HAVING COUNT(*)  > 1)
-
-=================================TASK=====================================
-
-remove all duplicates for address column in london_houses table
