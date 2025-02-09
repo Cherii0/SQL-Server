@@ -1,0 +1,170 @@
+USE ETL;
+
+SELECT 
+		*
+INTO
+		copyLondon
+FROM 
+		dbo.london_houses;
+
+-- restriction simple view based on one table
+
+CREATE OR ALTER VIEW vwLondonSimpleView AS ( 
+SELECT
+		Address,
+		Bedrooms,
+		Bathrooms,
+		[Square Meters]
+FROM
+		dbo.london_houses
+);
+
+-- UPDATE works fine
+
+UPDATE 
+		vwLondonSimpleView
+SET
+		[Square Meters] = 500
+WHERE 
+		Bathrooms = 2;
+
+-- INSERT works fine
+
+DELETE 
+		vwLondonSimpleView
+WHERE 
+		[Square Meters] = 500;
+
+-- DELETE works fine
+
+INSERT INTO
+		vwLondonSimpleView(Address, Bedrooms, Bathrooms, [Square Meters] )
+VALUES 
+		('AATestAddress', 5, 5, 500), ('AAATestAddress', 5, 5, 500);
+
+
+-- restriction aggregate, group by, having columns
+
+CREATE OR ALTER VIEW vwLondonAggr AS (
+	SELECT
+			Neighborhood,
+			AVG([Square Meters]) AS avg,
+			MIN([Square Meters]) AS min,
+			MAX([Square Meters]) AS max
+	FROM
+			dbo.london_houses
+	GROUP BY
+			Neighborhood
+	HAVING
+			MAX([Square Meters]) < 240
+);
+
+-- UPDATE not possible
+
+UPDATE 
+		vwLondonAggr
+SET
+		Neighborhood = 'Other'
+WHERE
+		max < 200;
+
+-- INSERT not possible
+
+INSERT INTO 
+			vwLondonAggr(Neighborhood, min, max, avg)
+VALUES		
+			('Neighborhood', 200, 200, 200 );
+
+-- DELETE not possible
+
+DELETE
+		vwLondonAggr
+WHERE
+		avg = 180;
+
+
+-- restriction computational column
+
+CREATE OR ALTER VIEW vwLondonComp AS (
+	SELECT
+			Bathrooms,
+			[Square Meters],
+			ROUND(CAST(Bathrooms AS FLOAT) / [Square Meters], 3) AS bathroom_per_meters,
+			CAST([Square Meters] AS FLOAT) / 1000 AS converted_sm
+	FROM
+			dbo.london_houses
+);
+
+-- DELETE works for non computed columns besides computed column present in table
+
+DELETE
+		vwLondonComp
+WHERE
+		[Square Meters] > 200;
+
+-- DELETE works on computed column also
+
+DELETE
+		vwLondonComp
+WHERE
+		bathroom_per_meters < 0.020;
+
+-- INSERT will not work
+
+INSERT INTO 
+		vwLondonComp(Bathrooms, [Square Meters], bathroom_per_meters)
+VALUES		
+		(3, 500, 0.2);
+
+-- UPDATE 
+
+UPDATE
+		vwLondonComp
+SET
+		converted_sm = 6
+WHERE
+		bathroom_per_meters BETWEEN 0 AND 1;
+
+
+UPDATE
+		vwLondonComp
+SET
+		Bathrooms = 6
+WHERE
+		[Square Meters] BETWEEN 10 AND 300;
+
+
+UPDATE
+		vwLondonComp
+SET
+		Bathrooms = 6
+WHERE
+		bathroom_per_meters BETWEEN 0 AND 1;
+
+
+UPDATE
+		vwLondonComp
+SET
+		bathroom_per_meters = 6
+WHERE
+		Bathrooms BETWEEN 2 AND 3;
+
+
+/*
+
+in SET only not computed columns allowed
+computed columns are allowed only in WHERE clause
+in order to UPDATE view
+
+  case 1 - WRONG		case 2 - FINE	        case 3 - FINE	      case 4 - WRONG
+  --------------       -----------------       ------------------    ----------------
+  SET	Computed       SET	NotComputed        SET NotComputed		  SET Computed
+  WHERE Computed       WHERE NotComputed	   WHERE Computed		  WHERE NotComputed
+
+*/
+
+-- restriction union, join columns
+-- restriction two views join
+-- restriction view based on view
+-- restriction where clause on column
+-- restriction order by clause
