@@ -1,0 +1,319 @@
+=================================SOLUTION=================================
+
+DELETE dbo.london_houses
+WHERE Address IN (SELECT Address FROM dbo.london_houses GROUP BY Address HAVING COUNT(*)  > 1)
+
+CREATE OR ALTER VIEW vwLondonPricesComparasion AS (
+SELECT 
+        Address, 
+        Bedrooms, 
+        Bathrooms, 
+        dbo.london_houses.[Square Meters], 
+        dbo.london_houses.Price, 
+        new_price.avg_price
+FROM 
+        dbo.london_houses
+LEFT JOIN 
+        (SELECT [Square Meters], AVG(Price) AS avg_price FROM dbo.london_houses GROUP BY [Square Meters])    
+        AS new_price ON dbo.london_houses.[Square Meters] = new_price.[Square Meters]
+)
+
+CREATE VIEW vwUniqueSquareMeters AS
+(SELECT DISTINCT [Square Meters] AS unique_square_meters FROM vwLondonPricesComparasion)
+
+CREATE VIEW vwAvgsBedBad AS
+(SELECT  [Square Meters], AVG(Bedrooms) AS AVG_BED, AVG(Bathrooms) AS AVG_BATH FROM vwLondonPricesComparasion GROUP BY [Square Meters])
+
+
+SELECT
+		*
+FROM
+		vwUniqueSquareMeters
+LEFT JOIN
+		(SELECT * FROM vwAvgsBedBad) AS avgs
+		ON vwUniqueSquareMeters.unique_square_meters = avgs.[Square Meters]
+
+
+
+USE ETL;
+
+SELECT 
+		*
+INTO
+		copyLondon
+FROM 
+		dbo.london_houses;
+
+-- restriction simple view based on one table
+
+CREATE OR ALTER VIEW vwLondonSimpleView AS ( 
+SELECT
+		Address,
+		Bedrooms,
+		Bathrooms,
+		[Square Meters]
+FROM
+		dbo.london_houses
+);
+
+-- UPDATE works fine
+
+UPDATE 
+		vwLondonSimpleView
+SET
+		[Square Meters] = 500
+WHERE 
+		Bathrooms = 2;
+
+-- INSERT works fine
+
+DELETE 
+		vwLondonSimpleView
+WHERE 
+		[Square Meters] = 500;
+
+-- DELETE works fine
+
+INSERT INTO
+		vwLondonSimpleView(Address, Bedrooms, Bathrooms, [Square Meters] )
+VALUES 
+		('AATestAddress', 5, 5, 500), ('AAATestAddress', 5, 5, 500);
+
+
+-- restriction aggregate, group by, having columns
+
+CREATE OR ALTER VIEW vwLondonAggr AS (
+	SELECT
+			Neighborhood,
+			AVG([Square Meters]) AS avg,
+			MIN([Square Meters]) AS min,
+			MAX([Square Meters]) AS max
+	FROM
+			dbo.london_houses
+	GROUP BY
+			Neighborhood
+	HAVING
+			MAX([Square Meters]) < 240
+);
+
+-- UPDATE not possible
+
+UPDATE 
+		vwLondonAggr
+SET
+		Neighborhood = 'Other'
+WHERE
+		max < 200;
+
+-- INSERT not possible
+
+INSERT INTO 
+			vwLondonAggr(Neighborhood, min, max, avg)
+VALUES		
+			('Neighborhood', 200, 200, 200 );
+
+-- DELETE not possible
+
+DELETE
+		vwLondonAggr
+WHERE
+		avg = 180;
+
+
+-- restriction computational column
+
+CREATE OR ALTER VIEW vwLondonComp AS (
+	SELECT
+			Bathrooms,
+			[Square Meters],
+			ROUND(CAST(Bathrooms AS FLOAT) / [Square Meters], 3) AS bathroom_per_meters,
+			CAST([Square Meters] AS FLOAT) / 1000 AS converted_sm
+	FROM
+			dbo.london_houses
+);
+
+-- DELETE works for non computed columns besides computed column present in table
+
+DELETE
+		vwLondonComp
+WHERE
+		[Square Meters] > 200;
+
+-- DELETE works on computed column also
+
+DELETE
+		vwLondonComp
+WHERE
+		bathroom_per_meters < 0.020;
+
+-- INSERT will not work
+
+INSERT INTO 
+		vwLondonComp(Bathrooms, [Square Meters], bathroom_per_meters)
+VALUES		
+		(3, 500, 0.2);
+
+-- UPDATE 
+
+UPDATE
+		vwLondonComp
+SET
+		converted_sm = 6
+WHERE
+		bathroom_per_meters BETWEEN 0 AND 1;
+
+
+UPDATE
+		vwLondonComp
+SET
+		Bathrooms = 6
+WHERE
+		[Square Meters] BETWEEN 10 AND 300;
+
+
+UPDATE
+		vwLondonComp
+SET
+		Bathrooms = 6
+WHERE
+		bathroom_per_meters BETWEEN 0 AND 1;
+
+
+UPDATE
+		vwLondonComp
+SET
+		bathroom_per_meters = 6
+WHERE
+		Bathrooms BETWEEN 2 AND 3;
+
+
+/*
+
+in SET only not computed columns allowed
+computed columns are allowed only in WHERE clause
+in order to UPDATE view
+
+  case 1 - WRONG		case 2 - FINE	        case 3 - FINE	      case 4 - WRONG
+  --------------       -----------------       ------------------    ----------------
+  SET	Computed       SET	NotComputed        SET NotComputed		  SET Computed
+  WHERE Computed       WHERE NotComputed	   WHERE Computed		  WHERE NotComputed
+
+*/
+
+-- restriction union, join columns
+
+CREATE OR ALTER VIEW vwMovieBasicJoin AS (
+		SELECT
+				MovieRating.*,
+				Users.name AS name
+		FROM
+				MovieRating
+		LEFT JOIN
+				Users ON MovieRating.user_id = Users.user_id
+);
+
+-- DELETE allows to delete rows only from single table
+
+DELETE
+		vwMovieBasicJoin
+WHERE
+		movie_id = 2;
+
+-- INSERT not possible due to manipulate two base table at same time
+
+INSERT INTO		
+		vwMovieBasicJoin(movie_id, user_id, rating,created_at,name)
+VALUES
+		(5,5,5,'2012-12-30', NULL)
+
+-- UPDATE SET allows columns only from single base table even from join
+
+UPDATE
+		vwMovieBasicJoin
+SET
+		name = 'Michael',
+		movie_id = 100
+WHERE 
+		user_id = 2
+
+-- restriction view based on view
+
+CREATE VIEW vwFilteredTab AS (
+		SELECT
+				*
+		FROM
+				FilteredTab
+);
+
+CREATE VIEW vwFilteredTab2 AS (
+		SELECT
+				*
+		FROM
+				vwFilteredTab
+);
+
+select * from vwFilteredTab;
+select * from vwFilteredTab2;
+
+-- DELETE removes rows from both views and table means view manipulation
+-- works also upwards and downwards same for INSERT, UPDATE
+
+DELETE
+		vwFilteredTab2
+WHERE
+		gender = 'M';
+
+INSERT INTO
+		vwFilteredTab2(index_, age, gender)
+VALUES
+		(0, 100, 'F')
+
+UPDATE
+		FilteredTab
+SET
+		age = 25
+WHERE
+		index_ = 0;
+
+-- restriction where clause on column
+
+USE StackOverflowMini
+
+CREATE VIEW dbo.vwSOFiltered AS (
+		SELECT 
+				id,
+				AcceptedAnswerId,
+				AnswerCount
+		FROM
+				dbo.Posts
+		WHERE
+				id BETWEEN 1 AND 10
+);
+
+SELECT * FROM vwSOFiltered
+
+DELETE 
+		dbo.vwSOFiltered
+WHERE 
+		id = 4;
+
+UPDATE
+		dbo.vwSOFiltered
+SET
+		AcceptedAnswerId = 99
+WHERE 
+		AnswerCount = 0
+
+INSERT INTO
+		dbo.vwSOFiltered(AcceptedAnswerId, AnswerCount)
+VALUES
+		(200, 300)
+
+
+=================================TASK=====================================
+
+- remove all duplicates for address column in london_houses table in order to make join avaliable
+compute new price based on average price on each unique square meters value, export this result as view
+- Create views and join them in order to check Update, Delete, Insert possibility
+        
+
