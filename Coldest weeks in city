@@ -1,0 +1,89 @@
+==============================SOLUTION==================================
+
+-- create table for filtered data
+
+DROP TABLE IF EXISTS Temperatures;
+CREATE TABLE Temperatures(
+		id INT PRIMARY KEY IDENTITY(1,1),
+		city varchar(max),
+		date_record DATE,
+		temperature float
+);
+
+-- raw table transformation
+
+ALTER TABLE TemperaturesRaw
+ALTER COLUMN column2 FLOAT
+
+ALTER TABLE TemperaturesRaw
+ALTER COLUMN column1 DATE
+
+
+-- inserting query result into existing table
+
+INSERT INTO Temperatures(city, date_record, temperature)
+SELECT
+		column4 AS city,
+		column1 AS date_record,
+		ROUND(column2, 1) AS temperature
+FROM
+		dbo.TemperaturesRaw
+WHERE 
+		column4 IN (
+
+SELECT TOP 3
+		column4 AS city
+FROM 
+		dbo.TemperaturesRaw
+GROUP BY
+		column4
+ORDER BY
+		COUNT(*)
+)
+
+-- filter out years with incomplete record history
+
+DELETE FROM 
+		Temperatures
+WHERE EXISTS (
+    SELECT 1
+    FROM (
+        SELECT 
+				    City, 
+            YEAR(date_record) AS year
+        FROM 
+				    Temperatures
+        GROUP BY
+				City, YEAR(date_record)
+      HAVING 
+				COUNT(*) <> 12
+    ) AS invalid_years
+    WHERE invalid_years.City = Temperatures.City
+      AND invalid_years.year = YEAR(Temperatures.date_record)
+);
+
+
+-- find the coldest week for each country
+
+WITH avg_temp AS(
+SELECT
+		*,
+		AVG(temperature) OVER (ORDER BY City, date_record ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING) AS average_weekly_temp
+FROM
+	Temperatures
+)
+SELECT
+		City,
+		MIN(date_record) AS min_avg_temp_week
+FROM
+		avg_temp
+GROUP BY
+		City
+
+==============================QUESTION==================================
+provide name of top 3 city which weekly temperature were lowest in history
+- load data from csv file
+- create targer table
+- filter incomplete years
+- write query to answer question
+
