@@ -1,0 +1,26 @@
+=================================SOLUTION=======================================
+
+WITH CTE AS (
+SELECT 
+		[Model Year], 
+		SUM(COUNT(*)) OVER (ORDER BY [Model Year] ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS total_cars
+FROM
+		dbo.ElectricCars 
+GROUP BY 
+		[Model Year]
+)
+SELECT TOP 3
+		[Model Year],
+		total_cars,
+		COALESCE(ROUND(LAST_VALUE(total_cars) OVER (ORDER BY [Model Year] ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW ) /
+		CAST(LAG(total_cars, 1) OVER (ORDER BY [Model Year])  AS FLOAT) * 100, 0) ,0)AS perecentage_increase
+FROM 
+		CTE
+ORDER BY 
+	perecentage_increase DESC
+
+=================================QUESTION=======================================
+
+using dbo.ElectricCars point top 3 years in terms of electric cars total amount increase compared to previous year
+
+
