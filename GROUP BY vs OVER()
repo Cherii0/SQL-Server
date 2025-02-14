@@ -1,0 +1,38 @@
+-- summary for key statistics using aggregate functions
+-- data collapsed to categories
+
+SELECT
+		Neighborhood,
+		COUNT(Address) AS total_property,
+		MIN([Square Meters]) AS min_sm,
+		MAX([Square Meters]) AS max_sm,
+		AVG([Square Meters]) AS avg_sm,
+		SUM(Price) AS price_total,
+		ROUND(SUM(CASE WHEN Garage = 'Yes' THEN 1 ELSE 0 END) / CAST(COUNT(Address) AS FLOAT) * 100, 1) AS garage_pct
+FROM 
+		london_houses
+GROUP BY
+		Neighborhood
+
+
+-- same results keeping original table by join summary columnns
+-- addictionaly added ranking for price
+
+SELECT
+		Address,
+		Neighborhood,
+		Price,
+		DENSE_RANK() OVER (ORDER BY Price ASC) AS rank_price,
+		COUNT(Address) OVER (PARTITION BY Neighborhood) AS total_properties,
+		MIN([Square Meters]) OVER (PARTITION BY Neighborhood) AS min_sm,
+		MAX([Square Meters]) OVER (PARTITION BY Neighborhood) AS max_sm,
+		AVG([Square Meters]) OVER (PARTITION BY Neighborhood) AS avg_sm,
+		SUM(Price) OVER (PARTITION BY Neighborhood) AS total_price,
+		ROUND(SUM(CASE WHEN Garage = 'Yes' THEN 1 ELSE 0 END) OVER(PARTITION BY Neighborhood) / CAST(COUNT(Address) OVER(PARTITION BY Neighborhood) AS FLOAT), 2) AS garagePctNeigh
+FROM
+		london_houses
+ORDER BY
+		Price
+
+
+
