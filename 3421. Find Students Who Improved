@@ -1,0 +1,46 @@
+==================================SOLUTION=================================
+
+WITH CTE AS (
+SELECT
+		*,
+		FIRST_VALUE(score) OVER (PARTITION BY student_id, subject ORDER BY exam_date) AS first_score,
+		LAST_VALUE(score) OVER (PARTITION BY student_id, subject ORDER BY exam_date) AS latest_score,
+		CASE WHEN  LAST_VALUE(score) OVER (PARTITION BY student_id, subject ORDER BY exam_date)
+					>  FIRST_VALUE(score) OVER (PARTITION BY student_id, subject ORDER BY exam_date) THEN 'impr' 
+					ELSE 'noimpr' END AS res,
+		RANK() OVER (PARTITION BY student_id, subject ORDER BY exam_date DESC) AS rank_first,
+		RANK() OVER (PARTITION BY student_id, subject ORDER BY exam_date ASC) AS rank_last
+
+FROM
+		Scores
+) 
+SELECT 
+		student_id,
+		subject,
+		first_score,
+		latest_score
+FROM
+		CTE
+WHERE
+		res = 'impr' AND rank_first = 1
+ORDER BY
+		student_id, subject
+
+==================================QUESTION=================================
+
+Table: Scores
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| student_id  | int     |
+| subject     | varchar |
+| score       | int     |
+| exam_date   | varchar |
++-------------+---------+
+(student_id, subject, exam_date) is the primary key for this table.
+Each row contains information about a student's score in a specific subject on a particular exam date. score is between 0 and 100 (inclusive).
+
+Write a solution to find the students who have shown improvement. A student is considered to have shown improvement if they meet both of these conditions:
+Have taken exams in the same subject on at least two different dates
+Their latest score in that subject is higher than their first score
+Return the result table ordered by student_id, subject in ascending order.
