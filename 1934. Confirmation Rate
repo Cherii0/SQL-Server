@@ -1,3 +1,38 @@
+=====================SOLUTION=================
+
+SELECT 
+	Signups.user_id, 
+	COALESCE(ROUND (CAST(counter_confirmed AS float) / CAST(COALESCE(counter_confirmed, 0) + COALESCE(counter_timeout, 0) AS float), 2), 0) AS 'confirmation_rate'
+FROM
+    Signups
+LEFT JOIN (
+SELECT 
+    user_id,
+    COUNT(*) AS counter_confirmed
+FROM
+    Confirmations
+WHERE 
+    action = 'confirmed'
+GROUP BY 
+    user_id) AS CONF
+ON 
+    Signups.user_id = CONF.user_id
+LEFT JOIN (
+SELECT 
+    user_id,
+    COUNT(*) AS counter_timeout
+FROM 
+    Confirmations
+WHERE 
+    action = 'timeout'
+GROUP BY 
+    user_id) AS TIM
+ON 
+    Signups.user_id = TIM.user_id
+
+=================QUESTION=================
+
+
 Table: Signups
 +----------------+----------+
 | Column Name    | Type     |
