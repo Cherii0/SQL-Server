@@ -1,0 +1,34 @@
+==================================SOLUTION=============================
+
+WITH CTE AS (
+SELECT 
+		*,
+		COALESCE(DATEDIFF(day, visit_date, LEAD(visit_date) OVER (PARTITION BY user_id ORDER BY visit_date)), 
+                      DATEDIFF(day, visit_date, '2021-01-01')) AS window
+FROM
+		UserVisits
+)
+SELECT
+		CTE.user_id,
+		MAX(CTE.window) AS biggest_window
+FROM CTE
+GROUP BY
+		user_id
+ORDER BY
+		user_id
+
+==================================QUESTION=============================
+
+Table: UserVisits
++-------------+------+
+| Column Name | Type |
++-------------+------+
+| user_id     | int  |
+| visit_date  | date |
++-------------+------+
+This table does not have a primary key, it might contain duplicate rows.
+This table contains logs of the dates that users visited a certain retailer.
+
+Assume today's date is '2021-1-1'.
+Write a solution that will, for each user_id, find out the largest window of days between each visit and the one right after it (or today if you are considering the last visit).
+Return the result table ordered by user_id.
