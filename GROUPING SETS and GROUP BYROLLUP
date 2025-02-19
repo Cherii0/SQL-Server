@@ -1,0 +1,31 @@
+===============================SOLUTION============================
+
+ -- USING GROUPING SETS
+SELECT
+		Neighborhood,
+		Garage,
+		COUNT(*)
+FROM
+		dbo.london_houses
+GROUP BY GROUPING SETS
+		( (), (Neighborhood, Garage), (Neighborhood))
+ORDER BY
+		Neighborhood, Garage
+
+-- USING ROLLUP
+SELECT
+		Neighborhood,
+		Garage,
+		COUNT(*)
+FROM
+		dbo.london_houses
+GROUP BY ROLLUP
+		(Neighborhood, Garage)
+ORDER BY
+		Neighborhood, Garage
+
+==================================QUESTION================================
+
+using london housed table create report with total neighborhood properties and
+their distribute for garage access 
+
