@@ -1,0 +1,41 @@
+====================================SOLUTION======================================
+
+DROP TABLE IF EXISTS Investments;
+
+CREATE TABLE Investments (
+		id INT,
+		amount INT
+);
+
+INSERT INTO Investments
+VALUES (1, 100),  (2, 50),  (3, 33);
+
+WITH CTE AS (
+
+	SELECT
+			I.id,
+			1 AS noinv,
+			I.amount,
+			CAST(I.amount AS FLOAT) AS indivitual_amount
+	FROM
+			Investments AS I
+
+	UNION ALL
+
+	SELECT
+		I.id,
+		(CTE.noinv + 1) AS noinv,
+		I.amount,
+		I.amount / CAST((CTE.noinv + 1)  AS FLOAT) AS indivitual_amount
+	FROM
+		CTE, Investments AS I
+	WHERE
+		CTE.noinv < 3
+)
+SELECT DISTINCT * FROM CTE
+
+====================================QUESTION======================================
+* provide report that shows number of investment between 1 and 3 for each amount of total invenstment
+with corresponding individual investments divided by number of investors
+
+
