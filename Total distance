@@ -1,0 +1,61 @@
+==============================================SOLUTION==============================================
+
+DROP TABLE IF EXISTS Destination;
+
+CREATE TABLE Destination (
+		
+		from_ varchar(50),
+		to_ varchar(50),
+		distance int
+);
+
+INSERT INTO Destination
+VALUES ('WROCLAW', 'POZNAN', 500),
+		('WROCLAW', 'GDANSK', 800),
+		('WROCLAW', 'KRAKOW', 400),
+		('POZNAN', 'WARSAW', 400),
+		('GDANSK', 'LODZ', 400),
+		('KRAKOW', 'GLIWICE', 100),
+		('GLIWICE', 'ZAMOSC', 300)
+
+		
+WITH CTE AS (
+	
+	SELECT
+			D.from_,
+			D.to_,
+			D.distance,
+			D.from_ AS temp 
+	FROM
+		Destination AS D
+	WHERE	
+		to_ = 'ZAMOSC'
+
+
+	UNION ALL
+
+		
+		SELECT
+				D.from_,
+				D.to_,
+				D.distance,
+				D.from_ AS temp
+		FROM
+				Destination AS D, CTE
+		WHERE
+			D.to_ = CTE.temp 
+
+)
+SELECT 
+		'Wroclaw' AS from_, 
+		'Zamosc' AS to_, 
+		SUM(distance) AS distance 
+FROM 
+		CTE
+
+
+==============================================QUESTION==============================================
+
+* write query to report total distance from WROCLAW to ZAMOSC
+
+
