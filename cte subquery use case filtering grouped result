@@ -1,0 +1,33 @@
+==================================SOLUTION==================================
+
+;WITH totals AS (
+	
+	SELECT
+		project_id,
+		MIN(amount) AS min,
+		SUM(amount) AS sum
+	FROM
+		dbo.donation AS D
+	GROUP BY
+		project_id
+)
+SELECT * FROM totals
+INNER JOIN dbo.project AS P ON P.id = totals.project_id
+WHERE minimal_amount < sum
+
+SELECT * FROM (
+	SELECT
+		project_id,
+		MIN(amount) AS min,
+		SUM(amount) AS sum
+	FROM
+		dbo.donation AS D
+	GROUP BY
+		project_id
+) AS totals
+INNER JOIN dbo.project AS P ON P.id = totals.project_id
+WHERE minimal_amount < sum
+
+
+==================================QUESTION==================================
+Obtain the project ID, minimal amount, and total donations for projects that have received donations over the minimum amount.
