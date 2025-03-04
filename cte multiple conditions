@@ -1,0 +1,44 @@
+================================SOLUTION=================================
+
+SELECT 
+		supporter_id, 
+		COUNT(*) AS num, 
+		SUM(amount) AS sum_donation
+FROM
+		donation
+GROUP BY
+		supporter_id
+HAVING SUM(amount) > 550 OR COUNT(*) >= 2
+ 
+
+
+ ;WITH con1 AS (
+ 
+	SELECT
+		supporter_id,
+		SUM(amount) AS sum_donated
+	FROM
+		donation
+	GROUP BY
+		supporter_id
+	HAVING SUM(amount) > 560
+ ),
+ con2 AS (
+ 
+	SELECT
+		supporter_id,
+		COUNT(*) AS num_donations
+	FROM 
+		donation
+	GROUP BY
+		supporter_id
+	HAVING COUNT(*) >= 2
+ ) 
+SELECT supporter_id FROM con1
+UNION ALL
+SELECT supporter_id FROM con2
+
+================================QUESTION=================================
+
+two approach to query supporter_id which has at least two donations or sum of donations > 550
+
